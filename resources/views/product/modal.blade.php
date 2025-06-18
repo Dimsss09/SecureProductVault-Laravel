@@ -11,20 +11,14 @@
                 <h5 class="mt-4 text-white">Are you sure you want to delete this Product?</h5>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
-
-                <form method="POST" action="{{ url('delete/'.$product->id) }}">
+                {{-- FORM PENGHAPUSAN: Berikan ID yang unik --}}
+                <form id="deleteForm{{ $product->id }}" action="{{ route('products.destroy', $product->id) }}" method="POST">
                     @csrf
-                    @method('DELETE')
+                    @method('DELETE')  <!-- Ini penting untuk mengubah method POST menjadi DELETE -->
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
-
-
-
-
-

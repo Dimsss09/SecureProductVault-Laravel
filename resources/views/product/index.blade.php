@@ -12,7 +12,9 @@
                 <div class="alert alert-danger">{{ session('message_error') }}</div>
             @endif
             <h4 class="mb-3">All Products
-                <a class="btn btn-sm btn-outline-success float-end" href="create"><i class="fa fa-plus"></i> Add Product</a>
+                <a class="btn btn-sm btn-outline-success float-end" href="{{ route('products.create') }}">
+                    <i class="fa fa-plus"></i> Add Product
+                </a>
             </h4>
             <div class="card border border-secondary shadow-sm">
                 <div class="card-header bg-dark text-light">{{ __('All Products') }}</div>
@@ -36,13 +38,16 @@
                                 <td>{{ $product->name }}</td>
                                 <td>{{ $product->description }}</td>
                                 <td>${{ $product->price }}</td>
-                                <td class="">
-                                    <a href="{{ url('read/'.$product->id) }}" class="btn btn-sm btn-outline-primary text-decoration-none m-1"><i class="fa fa-eye"></i> </a>
-                                    <a href="{{ url('update/'.$product->id.'/edit') }}" class="btn btn-sm btn-outline-success text-decoration-none m-1"><i class="fa fa-pencil"></i> </a>
-                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $product->id }}">
-                                            <span><i class="fa-solid fa-trash"></i></span></span>
-                                        </button>
+                                <td>
+                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-sm btn-outline-primary m-1">
+                                        <i class="fa fa-eye"></i>
                                     </a>
+                                    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-outline-success m-1">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger m-1" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $product->id }}">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                             @include('product.modal')

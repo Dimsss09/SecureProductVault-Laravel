@@ -2,38 +2,42 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 
+// Authentication Routes (Login, Register, Password Reset, dll.)
+Auth::routes(['verify' => true]);
 
-
-Auth::routes();
-
-// Index route
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-
-// // Use the ProductController for handling product-related routes
-Route::middleware(['auth'])->group(function () {
-
-    // Route for creating a new product
-    Route::get('create', [ProductController::class, 'create'])->name('product.create');
-    
-    // Route for creating a new product
-    Route::post('store', [ProductController::class, 'store'])->name('product.store');
-    
-    // Route for displaying a specific product
-    Route::get('read/{id}', [ProductController::class, 'read'])->name('product.read');
-
-    // Route for updating an existing product
-    Route::get('update/{id}/edit', [ProductController::class, 'edit'])->name('product.update');
-
-    // Route for updating an existing product
-    Route::put('update/{id}', [ProductController::class, 'update'])->name('product.update');
-
-    // Route for deleting a product
-    Route::delete('delete/{id}', [ProductController::class, 'delete'])->name('product.delete');
-
+// Redirect root URL to home
+Route::get('/', function () {
+    return redirect('/home'); // Redirect ke /home bukan ke route name
 });
 
+// Grup Route yang Membutuhkan Autentikasi (Hanya untuk User yang Sudah Login)
+Route::middleware(['auth'])->group(function () {
+    // Home route harus di atas route products
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    
+    // Product routes
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+    Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+});
 
+// HAPUS atau komentari baris di bawah ini jika Anda ingin '/' menjadi satu-satunya dashboard utama.
+// Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

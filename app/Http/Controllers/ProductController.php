@@ -7,10 +7,20 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-
-    public function create() {
+    /**
+     * Display a listing of the products.
+     */
+    public function index()
+    {
+        $products = Product::all();
+        return view('product.index', compact('products'));
+    }
+    
+    public function create()
+    {
         return view('product.create');
     }
+
     // View a product by its ID
     public function read($id)
     {
@@ -38,17 +48,10 @@ class ProductController extends Controller
             'price' => 'required|numeric',
         ]);
 
-        // Create a new Product instance with the validated data
-        $product = new Product([
-            'name' => $validatedData['name'],
-            'description' => $validatedData['description'],
-            'price' => $validatedData['price'],
-        ]);
+        Product::create($validatedData);
 
-        // Save the product to the database
-        $product->save();
-
-        return redirect('/')->with('message', 'Product Added Successfull.', 200);
+        return redirect()->route('products.index')
+            ->with('message', 'Product Added Successfully.');
     }
 
     // Open Product edit form
@@ -62,30 +65,37 @@ class ProductController extends Controller
     // Update an existing product
     public function update(Request $request, $id)
     {
-        // Validate the incoming data
+        // Validate the request
         $validatedData = $request->validate([
             'name' => 'required|max:191',
             'description' => 'required|max:191',
             'price' => 'required|numeric',
         ]);
 
-        // Find the product by its ID
-        $product = Product::find($id);
+        try {
+            // Find the product
+            $product = Product::find($id);
+            
+            if (!$product) {
+                return redirect()->back()
+                    ->with('message_error', 'Product not found')
+                    ->withInput();
+            }
 
-        if (!$product) {
-            // Return a JSON response with a 404 error message
-            return redirect('/')->with('message_error', 'Something Went Wrong!', 404);
+            // Update the product directly
+            $product->name = $validatedData['name'];
+            $product->description = $validatedData['description'];
+            $product->price = $validatedData['price'];
+            $product->save();
+
+            return redirect()->route('products.index')
+                ->with('message', 'Product updated successfully');
+        } catch (\Exception $e) {
+            \Log::error('Error updating product: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('message_error', 'Error updating product')
+                ->withInput();
         }
-
-        // Update the product attributes
-        $product->update([
-            'name' => $validatedData['name'],
-            'description' => $validatedData['description'],
-            'price' => $validatedData['price'],
-        ]);
-
-        // Return a JSON response indicating success
-        return redirect('/')->with('message', 'Product Updated Successfully', 200);
     }
 
     // Delete a product
@@ -97,7 +107,7 @@ class ProductController extends Controller
 
         // 
         if (!$product) {
-            return response()->with('message_error', 'Somthing Went Wrong!', 404);
+            return response()->with('message_error', 'Something Went Wrong!', 404);
         }
 
         // Delete the product
@@ -107,4 +117,24 @@ class ProductController extends Controller
 
     }
 
+    public function destroy($id)
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $product->delete();
+            return redirect()->route('products.index')->with('message', 'Product deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('message_error', 'Error deleting product');
+        }
+    }
+    public function show($id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return redirect()->back()->with('message_error', 'Product not found');
+        }
+        
+        return view('product.read', compact('product'));
+    }
 }
