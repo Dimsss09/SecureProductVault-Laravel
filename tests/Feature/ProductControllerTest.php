@@ -3,102 +3,112 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class ProductControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function it_can_list_products()
+    public function test_guest_is_redirected_from_products_page(): void
     {
-        // Create some dummy products
-        Product::factory(3)->create();
-
-        // Send a GET request to the index endpoint
-        $response = $this->get(route('products.index'));
-
-        // Assert that the response has a successful status code
-        $response->assertStatus(200);
-
-        // Assert that the response contains the correct number of products
-        $response->assertJsonCount(3);
-
-        // Additional assertions can be added to check the structure of the JSON response
+        $this->get(route('products.index'))
+            ->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function it_can_show_a_single_product()
+    public function test_authenticated_user_can_view_products_page(): void
     {
-        // Create a dummy product
-        $product = Product::factory()->create();
+        $user = User::factory()->create();
+        $product = Product::factory()->create([
+            'name' => 'Secure USB Drive 64GB',
+        ]);
 
-        // Send a GET request to the read endpoint with the product's ID
-        $response = $this->get(route('products.read', ['id' => $product->id]));
-
-        // Assert that the response has a successful status code
-        $response->assertStatus(200);
-
-        // Additional assertions can be added to check the content of the JSON response
+        $this->actingAs($user)
+            ->get(route('products.index'))
+            ->assertOk()
+            ->assertSee('All Products')
+            ->assertSee($product->name);
     }
 
-    /** @test */
-    public function it_can_create_a_product()
+    public function test_authenticated_user_can_create_product(): void
     {
-        // Prepare data for creating a product
-        $productData = [
-            'name' => 'Sample Product',
-            'description' => 'This is a sample product.',
-            'price' => 2000,
+        $user = User::factory()->create();
+
+        $payload = [
+            'name' => 'Hardware Security Key',
+            'description' => 'Security key untuk autentikasi multi-factor.',
+            'price' => 450000,
         ];
 
-        // Send a POST request to the create endpoint with product data
-        $response = $this->post(route('products.create'), $productData);
+        $this->actingAs($user)
+            ->post(route('products.store'), $payload)
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHas('message', 'Product Added Successfully.');
 
-        // Assert that the response has a successful status code
-        $response->assertStatus(200);
-
-        // Additional assertions can be added to check the response message or data
+        $this->assertDatabaseHas('products', $payload);
     }
 
-    /** @test */
-    public function it_can_update_a_product()
+    public function test_create_product_requires_valid_payload(): void
     {
-        // Create a dummy product
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->from(route('products.create'))
+            ->post(route('products.store'), [
+                'name' => '',
+                'description' => '',
+                'price' => 'not-a-number',
+            ])
+            ->assertRedirect(route('products.create'))
+            ->assertSessionHasErrors(['name', 'description', 'price']);
+    }
+
+    public function test_authenticated_user_can_view_product_detail(): void
+    {
+        $user = User::factory()->create();
         $product = Product::factory()->create();
 
-        // Prepare data for updating the product
-        $updatedData = [
-            'name' => 'Updated Product',
-            'description' => 'This product has been updated.',
-            'price' => 400,
+        $this->actingAs($user)
+            ->get(route('products.show', $product->id))
+            ->assertOk()
+            ->assertSee($product->name)
+            ->assertSee($product->description);
+    }
+
+    public function test_authenticated_user_can_update_product(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+
+        $payload = [
+            'name' => 'Updated Secure Product',
+            'description' => 'Deskripsi produk berhasil diperbarui.',
+            'price' => 500000,
         ];
 
-        // Send a PUT request to the update endpoint with updated data
-        $response = $this->put(route('products.update', ['id' => $product->id]), $updatedData);
+        $this->actingAs($user)
+            ->put(route('products.update', $product->id), $payload)
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHas('message', 'Product updated successfully');
 
-        // Assert that the response has a successful status code
-        $response->assertStatus(200);
-
-        // Additional assertions can be added to check the response message or data
+        $this->assertDatabaseHas('products', array_merge([
+            'id' => $product->id,
+        ], $payload));
     }
 
-    /** @test */
-    public function it_can_delete_a_product()
+    public function test_authenticated_user_can_delete_product(): void
     {
-        // Create a dummy product
+        $user = User::factory()->create();
         $product = Product::factory()->create();
 
-        // Send a DELETE request to the delete endpoint with the product's ID
-        $response = $this->delete(route('products.delete', ['id' => $product->id]));
+        $this->actingAs($user)
+            ->delete(route('products.destroy', $product->id))
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHas('message', 'Product deleted successfully');
 
-        // Assert that the response has a successful status code
-        $response->assertStatus(200);
-
-        // Additional assertions can be added to check the response message
+        $this->assertDatabaseMissing('products', [
+            'id' => $product->id,
+        ]);
     }
-
-    // You can add more test cases or edge cases as needed
 }

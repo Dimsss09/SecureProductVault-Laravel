@@ -4,9 +4,6 @@ SecureProductVault adalah aplikasi demo **Laravel Product CRUD dengan autentikas
 
 Aplikasi ini mensimulasikan sistem sederhana untuk mengelola data produk. Pengguna dapat membuat akun, masuk ke dashboard, lalu melakukan operasi **Create, Read, Update, dan Delete (CRUD)** pada data produk. Laravel menangani autentikasi, session, CSRF protection, validasi request, routing, migration database, dan rendering halaman melalui Blade template.
 
-> **Rekomendasi nama repository GitHub:** `SecureProductVault-Laravel`  
-> Alternatif: `Laravel-Secure-Product-CRUD`, `AuthProductHub-Laravel`, `ProductGuard-CRUD`, atau `KeamananData-Laravel-CRUD-Auth`.
-
 ---
 
 ## Architecture
@@ -258,7 +255,7 @@ Perintah berikut akan menghapus seluruh tabel lalu menjalankan migration ulang:
 php artisan migrate:fresh
 ```
 
-Jika nanti sudah tersedia seeder:
+Project sudah menyediakan seeder produk contoh, sehingga database dapat di-reset sekaligus diisi data demo dengan perintah:
 
 ```bash
 php artisan migrate:fresh --seed
@@ -311,7 +308,7 @@ npm install
 
 ## Screenshot Evidence
 
-Tambahkan screenshot hasil pengujian aplikasi ke folder dokumentasi, misalnya:
+Folder screenshot evidence sudah disiapkan di `docs/screenshots/`. Tambahkan screenshot hasil pengujian aplikasi ke folder tersebut, misalnya:
 
 ```text
 docs/screenshots/
@@ -332,7 +329,9 @@ Contoh penulisan evidence di README setelah screenshot tersedia:
 ![Products Index](docs/screenshots/04-products-index.png)
 ```
 
-Status saat ini: screenshot lokal belum disertakan di repository ini. File `Gist.md` masih berisi evidence dari referensi project lama, bukan evidence final dari project ini.
+Status saat ini: struktur folder screenshot sudah tersedia, tetapi file gambar screenshot aktual belum disertakan. File `Gist.md` masih berisi evidence dari referensi project lama, bukan evidence final dari project ini.
+
+> Catatan: screenshot aktual perlu diambil manual dari browser setelah aplikasi dijalankan karena repository tidak menyimpan hasil capture otomatis.
 
 ---
 
@@ -363,6 +362,9 @@ Dokumentasi internal project:
 - `app/Http/Controllers/ProductController.php` — logic CRUD produk.
 - `app/Models/Product.php` — model produk.
 - `database/migrations/2023_08_11_154605_create_products_table.php` — struktur tabel produk.
+- `database/seeders/ProductSeeder.php` — seed data produk contoh untuk demo.
+- `database/factories/ProductFactory.php` — factory data produk untuk automated test.
+- `tests/Feature/ProductControllerTest.php` — automated feature test untuk auth guard dan CRUD produk.
 - `resources/views/product/` — halaman Blade untuk CRUD produk.
 - `resources/views/layouts/app.blade.php` — layout utama aplikasi.
 
@@ -376,6 +378,70 @@ Dokumentasi eksternal yang relevan:
 
 ---
 
+## Production Deployment
+
+Panduan ringkas deployment ke server/cloud PHP standar:
+
+1. Siapkan server dengan PHP 8.1+, Composer, web server Nginx/Apache, MySQL/MariaDB, Node.js, dan Git.
+2. Clone repository ke server.
+3. Install dependency production:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+```
+
+4. Buat file `.env` production dan sesuaikan konfigurasi berikut:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://domain-anda.com
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=secure_product_vault
+DB_USERNAME=production_user
+DB_PASSWORD=strong_password
+```
+
+5. Generate key jika belum ada:
+
+```bash
+php artisan key:generate
+```
+
+6. Jalankan migration dan, bila diperlukan, seed data demo:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --force
+```
+
+7. Optimasi konfigurasi Laravel:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+8. Arahkan document root web server ke folder `public/`.
+9. Pastikan permission folder `storage/` dan `bootstrap/cache/` dapat ditulis oleh user web server.
+
+Checklist keamanan production:
+
+- [ ] `APP_DEBUG=false`.
+- [ ] `APP_KEY` sudah dibuat dan tidak dibagikan publik.
+- [ ] Credential database dan SMTP tidak di-commit ke Git.
+- [ ] HTTPS aktif.
+- [ ] Backup database disiapkan.
+- [ ] Permission folder Laravel sudah benar.
+
+---
+
 ## Current Status
 
 | Area                  | Status                 | Catatan                                                                               |
@@ -386,37 +452,13 @@ Dokumentasi eksternal yang relevan:
 | Database Migration    | ✅ Implemented         | Tabel `users`, password reset, jobs, token, dan `products` tersedia.                  |
 | Input Validation      | ✅ Implemented         | Validasi produk tersedia di `store` dan `update`.                                     |
 | UI Styling            | ✅ Implemented         | Menggunakan Bootstrap dark theme dan Font Awesome.                                    |
-| Email Sending         | ⚠️ Needs Configuration | Perlu konfigurasi SMTP di `.env`.                                                     |
-| Seeder Data           | ⚠️ Not Yet Added       | Belum ditemukan seeder khusus produk.                                                 |
-| Automated Test        | ⚠️ Basic Laravel Setup | Struktur test tersedia, tetapi belum ada test khusus CRUD produk.                     |
-| Screenshot Evidence   | ⚠️ Pending             | Screenshot final project perlu ditambahkan ke `docs/screenshots/`.                    |
-| Production Deployment | ⚠️ Not Yet Documented  | Dokumentasi deployment server/cloud belum dibuat.                                     |
+| Email Sending         | ⚠️ Needs Configuration | Perlu konfigurasi SMTP di `.env`; contoh Mailtrap sudah tersedia di Quick Start.      |
+| Seeder Data           | ✅ Implemented         | `ProductSeeder` tersedia dan dipanggil dari `DatabaseSeeder`.                         |
+| Automated Test        | ✅ Implemented         | Feature test CRUD produk dan proteksi auth tersedia di `ProductControllerTest`.       |
+| Screenshot Evidence   | ⚠️ Folder Ready        | Folder `docs/screenshots/` disiapkan; gambar screenshot aktual perlu ditambahkan.     |
+| Production Deployment | ✅ Documented          | Panduan deployment production sudah ditambahkan pada section `Production Deployment`. |
 
-Kesimpulan status: project sudah dapat digunakan sebagai **demo Laravel CRUD produk dengan autentikasi**. Untuk dokumentasi akhir/presentasi, yang masih disarankan adalah menambahkan screenshot evidence, konfigurasi email development, seed data produk contoh, dan automated test untuk alur CRUD.
-
----
-
-## Suggested GitHub Repository Name
-
-Nama utama yang disarankan:
-
-```text
-SecureProductVault-Laravel
-```
-
-Alasan:
-
-- Menggambarkan fokus project pada data produk.
-- Kata **Secure** dan **Vault** cocok dengan konteks mata kuliah keamanan data/informasi.
-- Kata **Laravel** membuat teknologi utama langsung terlihat oleh recruiter, dosen, atau reviewer GitHub.
-
-Alternatif nama:
-
-1. `Laravel-Secure-Product-CRUD`
-2. `AuthProductHub-Laravel`
-3. `ProductGuard-CRUD`
-4. `KeamananData-Laravel-CRUD-Auth`
-5. `SecureInventoryCRUD-Laravel`
+Kesimpulan status: project sudah dapat digunakan sebagai **demo Laravel CRUD produk dengan autentikasi**. Seeder produk contoh, automated feature test, dan dokumentasi deployment sudah ditambahkan. Sisa pekerjaan utama untuk dokumentasi akhir/presentasi adalah mengambil screenshot evidence aktual dari browser dan mengisi konfigurasi SMTP sesuai layanan email yang digunakan.
 
 ---
 
