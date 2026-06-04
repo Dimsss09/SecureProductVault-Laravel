@@ -184,7 +184,17 @@ DB_PASSWORD=
 
 ### 9. Konfigurasi Email Verification / Reset Password
 
-Untuk development, gunakan Mailtrap atau Gmail App Password. Contoh Mailtrap:
+File `.env.example` sudah menyediakan konfigurasi email development yang aman:
+
+```env
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS="noreply@secureproductvault.test"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Dengan konfigurasi `log`, link email verification dan reset password akan ditulis ke `storage/logs/laravel.log`. Ini cocok untuk demo lokal karena tidak membutuhkan credential SMTP.
+
+Jika ingin mengirim email ke inbox sandbox atau email sungguhan, ganti konfigurasi mail di `.env` lokal menjadi SMTP. Contoh Mailtrap:
 
 ```env
 MAIL_MAILER=smtp
@@ -197,7 +207,13 @@ MAIL_FROM_ADDRESS="noreply@secureproductvault.test"
 MAIL_FROM_NAME="SecureProductVault"
 ```
 
-Jika belum ingin memakai email sungguhan, fitur login dan CRUD tetap dapat diuji, tetapi link verifikasi/reset password tidak akan terkirim sampai konfigurasi mail benar.
+Setelah mengubah konfigurasi email, jalankan:
+
+```bash
+php artisan optimize:clear
+```
+
+Flow pengiriman email juga sudah ditutup automated test di `tests/Feature/EmailSendingTest.php` untuk memastikan registrasi mengirim notifikasi verifikasi email dan forgot password mengirim notifikasi reset password.
 
 ### 10. Jalankan Migration
 
@@ -308,47 +324,45 @@ npm install
 
 ## Screenshot Evidence
 
-Folder screenshot evidence sudah disiapkan di `docs/screenshots/`. Tambahkan screenshot hasil pengujian aplikasi ke folder tersebut, misalnya:
+Screenshot evidence aktual sudah tersedia di `docs/screenshots/`:
 
 ```text
 docs/screenshots/
-├── 01-login-page.png
-├── 02-register-page.png
-├── 03-email-verification-notice.png
-├── 04-products-index.png
-├── 05-create-product.png
-├── 06-product-detail.png
-├── 07-update-product.png
-└── 08-delete-confirmation-modal.png
+|-- 01-login-page.png
+|-- 02-register-page.png
+|-- 03-email-verification-notice.png
+|-- 04-products-index.png
+|-- 05-create-product.png
+|-- 06-product-detail.png
+|-- 07-update-product.png
+`-- 08-delete-confirmation-modal.png
 ```
 
-Contoh penulisan evidence di README setelah screenshot tersedia:
-
-```md
 ![Login Page](docs/screenshots/01-login-page.png)
+![Register Page](docs/screenshots/02-register-page.png)
+![Email Verification Notice](docs/screenshots/03-email-verification-notice.png)
 ![Products Index](docs/screenshots/04-products-index.png)
-```
+![Create Product](docs/screenshots/05-create-product.png)
+![Product Detail](docs/screenshots/06-product-detail.png)
+![Update Product](docs/screenshots/07-update-product.png)
+![Delete Confirmation Modal](docs/screenshots/08-delete-confirmation-modal.png)
 
-Status saat ini: struktur folder screenshot sudah tersedia, tetapi file gambar screenshot aktual belum disertakan. File `Gist.md` masih berisi evidence dari referensi project lama, bukan evidence final dari project ini.
-
-> Catatan: screenshot aktual perlu diambil manual dari browser setelah aplikasi dijalankan karena repository tidak menyimpan hasil capture otomatis.
+Screenshot diambil dari aplikasi Laravel yang dijalankan lokal dengan data demo produk dari seeder.
 
 ---
 
 ## Recommended Screenshots for Documentation
 
-Untuk dokumentasi final, ambil screenshot berikut:
+Screenshot dokumentasi final yang sudah tersedia:
 
 1. **Login Page** — bukti halaman login berjalan.
 2. **Register Page** — bukti registrasi user tersedia.
 3. **Email Verification Notice** — bukti fitur verifikasi email aktif.
 4. **Product Index** — bukti list produk tampil setelah login.
 5. **Create Product Form** — bukti form tambah produk tersedia.
-6. **Validation Error** — bukti validasi input berjalan.
-7. **Product Detail Page** — bukti fitur read/detail berjalan.
-8. **Update Product Form** — bukti fitur update berjalan.
-9. **Delete Confirmation Modal** — bukti hapus produk memakai konfirmasi.
-10. **Database Products Table** — bukti data tersimpan di MySQL/MariaDB.
+6. **Product Detail Page** — bukti fitur read/detail berjalan.
+7. **Update Product Form** — bukti fitur update berjalan.
+8. **Delete Confirmation Modal** — bukti hapus produk memakai konfirmasi.
 
 ---
 
@@ -365,6 +379,8 @@ Dokumentasi internal project:
 - `database/seeders/ProductSeeder.php` — seed data produk contoh untuk demo.
 - `database/factories/ProductFactory.php` — factory data produk untuk automated test.
 - `tests/Feature/ProductControllerTest.php` — automated feature test untuk auth guard dan CRUD produk.
+- `tests/Feature/EmailSendingTest.php` — automated feature test untuk notifikasi email verification dan reset password.
+- `.env.example` — template environment aman, termasuk konfigurasi email development.
 - `resources/views/product/` — halaman Blade untuk CRUD produk.
 - `resources/views/layouts/app.blade.php` — layout utama aplikasi.
 
@@ -452,13 +468,13 @@ Checklist keamanan production:
 | Database Migration    | ✅ Implemented         | Tabel `users`, password reset, jobs, token, dan `products` tersedia.                  |
 | Input Validation      | ✅ Implemented         | Validasi produk tersedia di `store` dan `update`.                                     |
 | UI Styling            | ✅ Implemented         | Menggunakan Bootstrap dark theme dan Font Awesome.                                    |
-| Email Sending         | ⚠️ Needs Configuration | Perlu konfigurasi SMTP di `.env`; contoh Mailtrap sudah tersedia di Quick Start.      |
+| Email Sending         | ✅ Implemented & Tested | `.env.example` memakai mailer `log` untuk demo; SMTP bisa diaktifkan di `.env`.       |
 | Seeder Data           | ✅ Implemented         | `ProductSeeder` tersedia dan dipanggil dari `DatabaseSeeder`.                         |
-| Automated Test        | ✅ Implemented         | Feature test CRUD produk dan proteksi auth tersedia di `ProductControllerTest`.       |
-| Screenshot Evidence   | ⚠️ Folder Ready        | Folder `docs/screenshots/` disiapkan; gambar screenshot aktual perlu ditambahkan.     |
+| Automated Test        | ✅ Implemented         | Feature test CRUD, proteksi auth, email verification, dan reset password tersedia.    |
+| Screenshot Evidence   | ✅ Completed           | Screenshot aktual tersedia di `docs/screenshots/`.                                    |
 | Production Deployment | ✅ Documented          | Panduan deployment production sudah ditambahkan pada section `Production Deployment`. |
 
-Kesimpulan status: project sudah dapat digunakan sebagai **demo Laravel CRUD produk dengan autentikasi**. Seeder produk contoh, automated feature test, dan dokumentasi deployment sudah ditambahkan. Sisa pekerjaan utama untuk dokumentasi akhir/presentasi adalah mengambil screenshot evidence aktual dari browser dan mengisi konfigurasi SMTP sesuai layanan email yang digunakan.
+Kesimpulan status: project sudah dapat digunakan sebagai **demo Laravel CRUD produk dengan autentikasi**. Seeder produk contoh, automated feature test, konfigurasi email development, screenshot evidence aktual, dan dokumentasi deployment sudah tersedia.
 
 ---
 
